@@ -1,0 +1,34 @@
+name: Daily price check (19:00 Canary)
+
+on:
+  schedule:
+    - cron: "0 18 * * *"
+    - cron: "0 19 * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Only run at 19:00 Canary time
+        run: |
+          HOUR=$(TZ=Atlantic/Canary date +%H)
+          if [ "$HOUR" != "19" ]; then
+            echo "Not 19:00 in Canary (hour=$HOUR). Exiting."
+            exit 0
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run tracker
+        run: python track_price.py
