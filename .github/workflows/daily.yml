@@ -28,7 +28,46 @@ jobs:
 
       - name: Install deps
         run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Run tracker
-        run: python track_price.py
+        id: run
+        run: |
+          python track_price.py | tee out.txt
+          PRICE=$(grep -E '^PRICE=' out.txt | cut -d= -f2)
+          CHANGED=$(grep -E '^CHANGED=' out.txt | cut -d= -f2 || echo 0)
+          PREV=$(grep -E '^PREV_PRICE=' out.txt | cut -d= -f2 || echo "")
+          FIRST=$(grep -E '^FIRST_RUN=' out.txt | cut -d= -f2 || echo 0)
+
+          echo "price=$PRICE" >> $GITHUB_OUTPUT
+          echo "changed=$CHANGED" >> $GITHUB_OUTPUT
+          echo "prev=$PREV" >> $GITHUB_OUTPUT
+          echo "first=$FIRST" >> $GITHUB_OUTPUT
+
+      - name: Commit updated state.json
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add state.json
+          git commit -m "Update state" || exit 0
+          git push
+
+      - name: Send email on change
+        if: steps.run.outputs.changed == '1'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          secure: true
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
+          subject: "Cambio de precio (MediaMarkt Canarias)"
+          to: ${{ secrets.MAIL_TO }}
+          from: ${{ secrets.MAIL_FROM }}
+          body: |
+            Cambio detectado en:
+            https://canarias.mediamarkt.es/products/plancha-de-vapor-philips-dst7031-70-250-g-apagado-automatico-300-ml-verde-opalo-menta
+
+            Precio anterior: ${{ steps.run.outputs.prev }} €
+            Precio nuevo: ${{ steps.run.outputs.price }} €
