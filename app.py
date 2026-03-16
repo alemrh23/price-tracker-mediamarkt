@@ -2,54 +2,60 @@
 # IMPORTACIÓN DE LIBRERÍAS
 # ---------------------------------------------------
 
-import streamlit as st        # librería para crear la web
-import json                   # para manejar archivos JSON
-import requests               # para hacer peticiones HTTP
-import base64                 # GitHub guarda archivos codificados en base64
+import streamlit as st
+import json
+import requests
+import base64
+import re
 from urllib.parse import urlparse
-from bs4 import BeautifulSoup # para leer el HTML de la página
+from bs4 import BeautifulSoup
 
 
 # ---------------------------------------------------
-# TÍTULO DE LA APP
+# CONFIGURACIÓN GENERAL
 # ---------------------------------------------------
 
 st.title("Rastreador de precios")
 
-
-# ---------------------------------------------------
-# CONFIGURACIÓN DE GITHUB
-# ---------------------------------------------------
-
-# Token secreto guardado en Streamlit
+# Secrets de Streamlit
 TOKEN = st.secrets["GITHUB_TOKEN"]
-
-# Repositorio donde está el archivo products.json
 REPO = st.secrets["REPO"]
 
-# Nombre del archivo donde se guardan los productos
+# Archivo donde se guardan los productos
 FILE = "products.json"
 
-# Rama principal del repositorio
+# Rama principal
 BRANCH = "main"
 
-# URL de la API de GitHub para acceder al archivo
+# URL de la API de GitHub para leer/escribir products.json
 API = f"https://api.github.com/repos/{REPO}/contents/{FILE}"
 
-# Cabeceras necesarias para autenticarse contra GitHub
+# Cabeceras para GitHub
 headers = {
     "Authorization": f"Bearer {TOKEN}",
     "Accept": "application/vnd.github+json"
 }
 
-# Cabecera para simular navegador (evita bloqueos)
+# Cabeceras para pedir páginas web como si fuera un navegador
 REQUEST_HEADERS = {
     "User-Agent": "Mozilla/5.0"
 }
 
 
 # ---------------------------------------------------
-# FUNCIÓN PARA VALIDAR URLs
+# ESTADO DE LOS CAMPOS DEL FORMULARIO
+# ---------------------------------------------------
+# Esto permite vaciar los inputs después de añadir un producto
+
+if "name_input" not in st.session_state:
+    st.session_state.name_input = ""
+
+if "url_input" not in st.session_state:
+    st.session_state.url_input = ""
+
+
+# ---------------------------------------------------
+# VALIDAR URL
 # ---------------------------------------------------
 
 def valid_url(url):
@@ -61,43 +67,32 @@ def valid_url(url):
 
 
 # ---------------------------------------------------
-# FUNCIÓN PARA CARGAR PRODUCTOS DESDE GITHUB
+# CARGAR PRODUCTOS DESDE GITHUB
 # ---------------------------------------------------
 
 def load_products():
-
-    # pedimos el archivo products.json a GitHub
     r = requests.get(API, headers=headers, timeout=30)
-
-    # si hay error lanza excepción
     r.raise_for_status()
 
-    # convertimos respuesta a JSON
     data = r.json()
 
-    # GitHub devuelve el contenido codificado en base64
+    # El contenido viene en base64
     content = base64.b64decode(data["content"]).decode("utf-8")
 
-    # convertimos JSON a lista de productos
     products = json.loads(content)
 
-    # devolvemos productos y el SHA del archivo
+    # Devolvemos también el SHA, necesario para actualizar el archivo
     return products, data["sha"]
 
 
 # ---------------------------------------------------
-# FUNCIÓN PARA GUARDAR PRODUCTOS EN GITHUB
+# GUARDAR PRODUCTOS EN GITHUB
 # ---------------------------------------------------
 
 def save_products(products, sha):
-
-    # convertimos lista de productos a texto JSON
     json_text = json.dumps(products, ensure_ascii=False, indent=2)
+    encoded = base64.b64encode(json_text.encode("utf-8")).decode("utf-8")
 
-    # codificamos en base64 (GitHub lo exige)
-    encoded = base64.b64encode(json_text.encode()).decode()
-
-    # datos del commit
     payload = {
         "message": "Update products.json from Streamlit app",
         "content": encoded,
@@ -105,21 +100,17 @@ def save_products(products, sha):
         "branch": BRANCH
     }
 
-    # enviamos actualización a GitHub
     r = requests.put(API, headers=headers, json=payload, timeout=30)
-
     r.raise_for_status()
 
 
 # ---------------------------------------------------
-# FUNCIÓN PARA EXTRAER EL PRECIO DEL HTML
+# EXTRAER PRECIO DESDE JSON-LD
 # ---------------------------------------------------
+# Primer intento: buscar precio estructurado en scripts JSON-LD
 
 def extract_price_from_jsonld(soup):
-
-    # muchas webs guardan datos del producto en JSON-LD
     for tag in soup.find_all("script", type="application/ld+json"):
-
         raw = tag.string
         if not raw:
             continue
@@ -132,53 +123,82 @@ def extract_price_from_jsonld(soup):
         items = data if isinstance(data, list) else [data]
 
         for obj in items:
-
             if not isinstance(obj, dict):
                 continue
 
             offers = obj.get("offers")
 
-            # caso 1: offers es un diccionario
+            # Caso 1: offers es dict
             if isinstance(offers, dict):
                 price = offers.get("price")
-
                 if price is not None:
-                    return float(str(price).replace(",", "."))
+                    try:
+                        return float(str(price).replace(",", "."))
+                    except:
+                        pass
 
-            # caso 2: offers es una lista
+            # Caso 2: offers es lista
             elif isinstance(offers, list):
-
                 for offer in offers:
                     if isinstance(offer, dict) and offer.get("price") is not None:
-                        return float(str(offer["price"]).replace(",", "."))
+                        try:
+                            return float(str(offer["price"]).replace(",", "."))
+                        except:
+                            pass
 
     return None
 
 
 # ---------------------------------------------------
-# FUNCIÓN PARA OBTENER PRECIO ACTUAL
+# EXTRAER PRECIO COMO TEXTO VISIBLE
+# ---------------------------------------------------
+# Segundo intento: buscar patrones tipo "79,99 €" en el texto de la página
+
+def extract_price_from_text(soup):
+    text = soup.get_text(" ", strip=True)
+
+    # Busca números tipo 79,99 € o 79.99 €
+    matches = re.findall(r"(\d+[.,]\d{2})\s*€", text)
+
+    if not matches:
+        return None
+
+    # Tomamos el primer precio encontrado
+    try:
+        return float(matches[0].replace(",", "."))
+    except:
+        return None
+
+
+# ---------------------------------------------------
+# OBTENER PRECIO ACTUAL DE UNA URL
 # ---------------------------------------------------
 
 def get_current_price(url):
-
     try:
-        # descargamos la página del producto
         r = requests.get(url, headers=REQUEST_HEADERS, timeout=30)
-
         r.raise_for_status()
 
-        # parseamos el HTML
         soup = BeautifulSoup(r.text, "html.parser")
 
-        # intentamos extraer precio
-        return extract_price_from_jsonld(soup)
+        # Intento 1: JSON-LD
+        price = extract_price_from_jsonld(soup)
+        if price is not None:
+            return price
+
+        # Intento 2: texto visible
+        price = extract_price_from_text(soup)
+        if price is not None:
+            return price
+
+        return None
 
     except:
         return None
 
 
 # ---------------------------------------------------
-# CARGAMOS PRODUCTOS
+# CARGA INICIAL
 # ---------------------------------------------------
 
 products, sha = load_products()
@@ -190,9 +210,15 @@ products, sha = load_products()
 
 st.subheader("Añadir producto")
 
-name = st.text_input("Nombre del producto")
-url = st.text_input("URL del producto")
+name = st.text_input(
+    "Nombre del producto",
+    key="name_input"
+)
 
+url = st.text_input(
+    "URL del producto",
+    key="url_input"
+)
 
 if st.button("Añadir producto"):
 
@@ -206,24 +232,27 @@ if st.button("Añadir producto"):
         st.warning("Este producto ya está monitorizado.")
 
     else:
-
-        # añadimos producto a la lista
+        # Añadimos el producto
         products.append({
             "name": name.strip(),
             "url": url.strip()
         })
 
-        # guardamos en GitHub
+        # Guardamos cambios en GitHub
         save_products(products, sha)
+
+        # Limpiamos los campos
+        st.session_state.name_input = ""
+        st.session_state.url_input = ""
 
         st.success("Producto añadido")
 
-        # refrescamos app
+        # Recarga para ver cambios
         st.rerun()
 
 
 # ---------------------------------------------------
-# LISTA DE PRODUCTOS MONITORIZADOS
+# LISTA DE PRODUCTOS
 # ---------------------------------------------------
 
 st.subheader("Productos monitorizados")
@@ -231,16 +260,13 @@ st.subheader("Productos monitorizados")
 if len(products) == 0:
     st.info("No hay productos aún.")
 
-
-# recorremos productos
 for i, p in enumerate(products):
 
-    # obtenemos precio actual
+    # Obtenemos precio actual
     price = get_current_price(p["url"])
 
-    col1, col2 = st.columns([6,1])
+    col1, col2 = st.columns([6, 1])
 
-    # mostramos nombre y precio
     if price is not None:
         col1.write(f"**{p['name']}** — **{price:.2f} €**")
     else:
@@ -248,13 +274,8 @@ for i, p in enumerate(products):
 
     col1.caption(p["url"])
 
-    # botón eliminar
-    if col2.button("Eliminar", key=i):
-
-        new_products = products[:i] + products[i+1:]
-
+    if col2.button("Eliminar", key=f"del_{i}"):
+        new_products = products[:i] + products[i + 1:]
         save_products(new_products, sha)
-
         st.success("Producto eliminado")
-
         st.rerun()
