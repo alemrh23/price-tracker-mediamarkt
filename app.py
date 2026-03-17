@@ -25,39 +25,40 @@ st.set_page_config(
 # ===================================================
 # ESTILOS CSS
 # ===================================================
-# Objetivos visuales:
-# - Quitar barras/separaciones grises
-# - Dar más protagonismo a cada producto
-# - Hacer tarjetas limpias, modernas y con sombra
-# - Destacar mucho más el precio
+# Aquí definimos el aspecto visual de la aplicación.
+# Objetivos:
+# - eliminar las "barras" blancas/grises que no te gustan
+# - mejorar separación entre productos
+# - hacer el botón de eliminar más agradable
+# - dar más protagonismo al precio
 
 st.markdown("""
 <style>
-    /* Fondo general */
+    /* Fondo general de la app */
     .stApp {
         background-color: #f6f8fb;
     }
 
-    /* Reduce espacio superior */
+    /* Ajuste general del contenido */
     .main .block-container {
+        max-width: 1150px;
         padding-top: 1.5rem;
         padding-bottom: 2rem;
-        max-width: 1200px;
     }
 
     /* Título principal */
     .app-title {
-        font-size: 2.5rem;
+        font-size: 2.45rem;
         font-weight: 900;
         color: #0f172a;
-        margin-bottom: 0.15rem;
         line-height: 1.1;
+        margin-bottom: 0.2rem;
     }
 
     /* Subtítulo */
     .app-subtitle {
-        font-size: 1rem;
         color: #64748b;
+        font-size: 1rem;
         margin-bottom: 2rem;
     }
 
@@ -65,80 +66,60 @@ st.markdown("""
     .section-title {
         font-size: 1.8rem;
         font-weight: 800;
-        color: #111827;
-        margin-top: 1rem;
+        color: #0f172a;
+        margin-top: 1.25rem;
         margin-bottom: 1rem;
-    }
-
-    /* Caja del formulario */
-    .form-shell {
-        background: #ffffff;
-        border: none;
-        border-radius: 24px;
-        padding: 1.25rem;
-        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-        margin-bottom: 2rem;
     }
 
     /* Tarjeta de producto */
     .product-card {
         background: #ffffff;
-        border: none;
-        border-radius: 24px;
-        padding: 1.25rem 1.35rem;
-        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+        border: 1px solid #e8edf5;
+        border-radius: 22px;
+        padding: 1.2rem 1.3rem;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
         margin-bottom: 1rem;
     }
 
-    /* Cabecera superior de la tarjeta */
-    .product-top-row {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 1rem;
-        margin-bottom: 0.5rem;
-    }
-
-    /* Etiqueta */
+    /* Etiqueta pequeña */
     .product-chip {
         display: inline-block;
         background: #eef4ff;
         color: #1d4ed8;
         font-size: 0.72rem;
         font-weight: 800;
-        padding: 0.3rem 0.65rem;
+        padding: 0.28rem 0.7rem;
         border-radius: 999px;
-        letter-spacing: 0.01em;
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.8rem;
     }
 
     /* Nombre del producto */
     .product-name {
-        font-size: 1.2rem;
+        font-size: 1.18rem;
         font-weight: 800;
-        color: #0f172a;
-        line-height: 1.3;
-        margin: 0;
+        color: #111827;
+        line-height: 1.35;
+        margin-bottom: 0.45rem;
     }
 
-    /* Precio destacado */
+    /* Precio disponible */
     .product-price {
-        font-size: 2.2rem;
+        font-size: 2.05rem;
         font-weight: 900;
         color: #059669;
         line-height: 1.05;
-        margin: 0.25rem 0 0.5rem 0;
+        margin-bottom: 0.45rem;
     }
 
-    /* Texto cuando no hay precio */
-    .product-no-price {
+    /* Cuando no hay precio */
+    .product-price-unavailable {
         font-size: 1rem;
         font-weight: 700;
         color: #b45309;
-        margin: 0.35rem 0 0.6rem 0;
+        margin-bottom: 0.45rem;
     }
 
-    /* URL más discreta */
+    /* URL */
     .product-url {
         font-size: 0.9rem;
         color: #64748b;
@@ -146,42 +127,55 @@ st.markdown("""
         word-break: break-word;
     }
 
-    /* Info auxiliar */
-    .small-muted {
-        font-size: 0.9rem;
-        color: #64748b;
-    }
-
-    /* Quitar posibles bordes raros en elementos internos */
-    div[data-testid="stForm"] {
-        border: none !important;
-        background: transparent !important;
-        box-shadow: none !important;
-    }
-
-    div[data-testid="stForm"] > div {
-        border: none !important;
-    }
-
-    /* Botones más redondeados */
-    .stButton > button {
+    /* Caja visual pequeña para contador */
+    .counter-box {
+        background: #eaf2ff;
+        color: #1d4ed8;
         border-radius: 14px;
+        padding: 0.75rem 1rem;
         font-weight: 700;
+        margin-bottom: 1rem;
     }
 
-    /* Botón de eliminar más elegante */
-    .delete-button-wrap {
-        margin-top: 0.1rem;
-    }
-
-    /* Inputs */
+    /* Mejora visual de inputs */
     div[data-baseweb="input"] > div {
         border-radius: 14px !important;
     }
 
-    /* Quita líneas horizontales que a veces aparecen */
+    /* Botón principal (Añadir) */
+    .stForm button[kind="primary"] {
+        border-radius: 14px !important;
+        font-weight: 800 !important;
+        height: 2.8rem !important;
+    }
+
+    /* Botones secundarios (como eliminar) */
+    .stButton button[kind="secondary"] {
+        border-radius: 14px !important;
+        border: 1px solid #fecaca !important;
+        background: #fff5f5 !important;
+        color: #dc2626 !important;
+        font-weight: 800 !important;
+        min-height: 2.8rem !important;
+    }
+
+    .stButton button[kind="secondary"]:hover {
+        background: #fee2e2 !important;
+        border-color: #fca5a5 !important;
+        color: #b91c1c !important;
+    }
+
+    /* Oculta líneas horizontales si aparecieran */
     hr {
         display: none !important;
+    }
+
+    /* Evita bordes raros del formulario */
+    div[data-testid="stForm"] {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -201,29 +195,27 @@ st.markdown(
 # ===================================================
 # CONFIGURACIÓN DE GITHUB
 # ===================================================
+# Estos valores salen de los Secrets de Streamlit.
 
-# Token guardado en Secrets de Streamlit
 TOKEN = st.secrets["GITHUB_TOKEN"]
-
-# Repositorio en formato usuario/repositorio
 REPO = st.secrets["REPO"]
 
-# Archivo donde se guardan los productos
+# Archivo JSON donde guardamos los productos
 FILE = "products.json"
 
-# Rama principal
+# Rama principal del repositorio
 BRANCH = "main"
 
-# Endpoint de GitHub API para leer/escribir products.json
+# URL de la API de GitHub para leer/escribir el archivo
 API = f"https://api.github.com/repos/{REPO}/contents/{FILE}"
 
-# Cabeceras para autenticación con GitHub
+# Cabeceras para autenticarnos en GitHub
 headers = {
     "Authorization": f"Bearer {TOKEN}",
     "Accept": "application/vnd.github+json"
 }
 
-# Cabeceras para pedir páginas web simulando navegador
+# Cabeceras para pedir páginas web simulando un navegador
 REQUEST_HEADERS = {
     "User-Agent": "Mozilla/5.0"
 }
@@ -235,7 +227,7 @@ REQUEST_HEADERS = {
 
 def valid_url(url):
     """
-    Comprueba si una URL tiene formato válido.
+    Comprueba si la URL tiene formato válido.
     """
     try:
         result = urlparse(url)
@@ -251,18 +243,20 @@ def valid_url(url):
 def load_products():
     """
     Lee products.json desde GitHub.
+
     Devuelve:
     - la lista de productos
-    - el SHA actual del archivo
+    - el SHA actual del archivo, necesario para actualizarlo después
     """
     r = requests.get(API, headers=headers, timeout=30)
     r.raise_for_status()
 
     data = r.json()
 
-    # GitHub devuelve el contenido en base64
+    # El contenido del archivo viene codificado en base64
     content = base64.b64decode(data["content"]).decode("utf-8")
 
+    # Convertimos el JSON a lista Python
     products = json.loads(content)
 
     return products, data["sha"]
@@ -274,10 +268,12 @@ def load_products():
 
 def save_products(products, sha):
     """
-    Guarda la lista actualizada en GitHub.
+    Guarda la lista de productos en products.json.
     """
+    # Convertimos la lista a texto JSON legible
     json_text = json.dumps(products, ensure_ascii=False, indent=2)
 
+    # GitHub exige el contenido en base64
     encoded = base64.b64encode(json_text.encode("utf-8")).decode("utf-8")
 
     payload = {
@@ -297,7 +293,7 @@ def save_products(products, sha):
 
 def extract_price_from_jsonld(soup):
     """
-    Intenta obtener el precio desde scripts JSON-LD.
+    Intenta sacar el precio desde datos estructurados JSON-LD.
     """
     for tag in soup.find_all("script", type="application/ld+json"):
         raw = tag.string
@@ -317,7 +313,7 @@ def extract_price_from_jsonld(soup):
 
             offers = obj.get("offers")
 
-            # Caso 1: offers es dict
+            # Caso: offers es un diccionario
             if isinstance(offers, dict):
                 price = offers.get("price")
                 if price is not None:
@@ -326,7 +322,7 @@ def extract_price_from_jsonld(soup):
                     except Exception:
                         pass
 
-            # Caso 2: offers es lista
+            # Caso: offers es una lista
             elif isinstance(offers, list):
                 for offer in offers:
                     if isinstance(offer, dict) and offer.get("price") is not None:
@@ -344,10 +340,11 @@ def extract_price_from_jsonld(soup):
 
 def extract_price_from_text(soup):
     """
-    Si falla JSON-LD, busca precios tipo 79,99 € o 79.99 € en el texto.
+    Si falla el método JSON-LD, intenta encontrar el precio en el texto visible.
     """
     text = soup.get_text(" ", strip=True)
 
+    # Busca patrones tipo 79,99 € o 79.99 €
     matches = re.findall(r"(\d+[.,]\d{2})\s*€", text)
 
     if not matches:
@@ -365,7 +362,7 @@ def extract_price_from_text(soup):
 
 def get_current_price(url):
     """
-    Descarga la página del producto e intenta extraer el precio actual.
+    Descarga la página del producto e intenta obtener su precio.
     """
     try:
         r = requests.get(url, headers=REQUEST_HEADERS, timeout=30)
@@ -373,7 +370,7 @@ def get_current_price(url):
 
         soup = BeautifulSoup(r.text, "html.parser")
 
-        # Primer intento: JSON-LD
+        # Primer intento: datos estructurados
         price = extract_price_from_jsonld(soup)
         if price is not None:
             return price
@@ -396,18 +393,20 @@ def get_current_price(url):
 @st.dialog("Confirmar eliminación")
 def confirm_delete_dialog(product_index, product_name, products, sha):
     """
-    Muestra una ventana modal para confirmar el borrado.
+    Abre una ventana modal para confirmar el borrado de un producto.
     """
     st.write(f"¿Seguro que quieres eliminar **{product_name}**?")
 
     col_yes, col_no = st.columns(2)
 
+    # Confirmar eliminación
     if col_yes.button("Sí, eliminar", key=f"confirm_yes_{product_index}", use_container_width=True):
         new_products = products[:product_index] + products[product_index + 1:]
         save_products(new_products, sha)
         st.success("Producto eliminado")
         st.rerun()
 
+    # Cancelar
     if col_no.button("Cancelar", key=f"confirm_no_{product_index}", use_container_width=True):
         st.rerun()
 
@@ -420,18 +419,18 @@ products, sha = load_products()
 
 
 # ===================================================
-# SECCIÓN AÑADIR PRODUCTO
+# SECCIÓN: AÑADIR PRODUCTO
 # ===================================================
 
 st.markdown('<div class="section-title">Añadir producto</div>', unsafe_allow_html=True)
 
-# Caja visual del formulario
-st.markdown('<div class="form-shell">', unsafe_allow_html=True)
+# Contador visual
+st.markdown(
+    f'<div class="counter-box">{len(products)} / 10 productos</div>',
+    unsafe_allow_html=True
+)
 
-# Indicador de límite
-st.info(f"{len(products)} / 10 productos")
-
-# Si ya hay 10 productos, desactivamos el formulario
+# Si ya hay 10 productos, no permitimos añadir más
 limit_reached = len(products) >= 10
 
 with st.form("add_product_form", clear_on_submit=True):
@@ -453,6 +452,7 @@ with st.form("add_product_form", clear_on_submit=True):
 
     submitted = st.form_submit_button(
         "Añadir",
+        type="primary",
         use_container_width=True,
         disabled=limit_reached
     )
@@ -462,15 +462,15 @@ with st.form("add_product_form", clear_on_submit=True):
         if len(products) >= 10:
             st.error("Has alcanzado el límite de 10 productos.")
 
-        # Validación de campos
+        # Validación de campos obligatorios
         elif not name.strip() or not url.strip():
             st.error("Debes introducir nombre y URL.")
 
-        # Validación de URL
+        # Validación de formato de URL
         elif not valid_url(url):
             st.error("URL no válida.")
 
-        # Evitar duplicados
+        # Evita duplicados por URL
         elif any(p["url"] == url for p in products):
             st.warning("Este producto ya está monitorizado.")
 
@@ -487,11 +487,9 @@ with st.form("add_product_form", clear_on_submit=True):
 if limit_reached:
     st.warning("Has alcanzado el máximo de 10 productos. Elimina uno para añadir otro.")
 
-st.markdown('</div>', unsafe_allow_html=True)
-
 
 # ===================================================
-# SECCIÓN PRODUCTOS MONITORIZADOS
+# SECCIÓN: PRODUCTOS MONITORIZADOS
 # ===================================================
 
 st.markdown('<div class="section-title">Productos monitorizados</div>', unsafe_allow_html=True)
@@ -505,34 +503,36 @@ for i, p in enumerate(products):
     price = get_current_price(p["url"])
 
     # Dos columnas:
-    # - izquierda: tarjeta
-    # - derecha: acción de eliminar
-    col_card, col_delete = st.columns([12, 1])
+    # - izquierda: tarjeta del producto
+    # - derecha: botón eliminar
+    col_card, col_action = st.columns([11, 2], vertical_alignment="center")
 
     with col_card:
-        st.markdown('<div class="product-card">', unsafe_allow_html=True)
-
-        # Etiqueta pequeña
-        st.markdown('<div class="product-chip">Producto monitorizado</div>', unsafe_allow_html=True)
-
-        # Nombre
-        st.markdown(f'<div class="product-name">{p["name"]}</div>', unsafe_allow_html=True)
-
-        # Precio muy destacado
+        # Renderizamos toda la tarjeta en un único bloque HTML
+        # para evitar separadores raros o barras vacías.
         if price is not None:
-            st.markdown(f'<div class="product-price">{price:.2f} €</div>', unsafe_allow_html=True)
+            price_html = f'<div class="product-price">{price:.2f} €</div>'
         else:
-            st.markdown('<div class="product-no-price">Precio no disponible</div>', unsafe_allow_html=True)
+            price_html = '<div class="product-price-unavailable">Precio no disponible</div>'
 
-        # URL
-        st.markdown(f'<div class="product-url">{p["url"]}</div>', unsafe_allow_html=True)
+        st.markdown(
+            f"""
+            <div class="product-card">
+                <div class="product-chip">Producto monitorizado</div>
+                <div class="product-name">{p["name"]}</div>
+                {price_html}
+                <div class="product-url">{p["url"]}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    with col_delete:
-        st.markdown('<div class="delete-button-wrap"></div>', unsafe_allow_html=True)
-        st.write("")
-        st.write("")
-
-        if st.button("✕", key=f"del_{i}", use_container_width=True):
+    with col_action:
+        # Botón eliminar, más claro y agradable
+        if st.button(
+            "🗑️ Eliminar",
+            key=f"del_{i}",
+            type="secondary",
+            use_container_width=True
+        ):
             confirm_delete_dialog(i, p["name"], products, sha)
