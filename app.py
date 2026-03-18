@@ -27,12 +27,12 @@ st.set_page_config(
 # ===================================================
 # ESTILOS CSS
 # ===================================================
-# Objetivos:
-# - mantener inputs visibles y claros
-# - botón Añadir centrado y con mejor color
-# - listado tipo tabla
-# - nombre y URL algo más grandes
-# - botón eliminar discreto
+# Cambios principales:
+# - Nombre más visible
+# - URL más legible
+# - Botón Añadir con nuevo color
+# - Tabla limpia
+# - Inputs visibles
 
 st.markdown("""
 <style>
@@ -48,7 +48,7 @@ st.markdown("""
         padding-bottom: 2rem;
     }
 
-    /* Título principal */
+    /* Título */
     .app-title {
         font-size: 2.5rem;
         font-weight: 900;
@@ -83,43 +83,46 @@ st.markdown("""
         margin-bottom: 1rem;
     }
 
-    /* Cabecera de la tabla */
+    /* Cabecera de tabla */
     .table-header {
         font-weight: 800;
-        color: #475569;
-        font-size: 0.92rem;
+        color: #334155;
+        font-size: 0.95rem;
         padding-left: 0.2rem;
+        margin-bottom: 0.15rem;
     }
 
-    /* Celda tipo tarjeta */
+    /* Celdas tipo tarjeta */
     .table-row {
         background: white;
+        border: 1px solid #e7edf5;
         border-radius: 14px;
-        padding: 0.9rem;
-        margin-bottom: 0.55rem;
+        padding: 0.95rem 1rem;
+        margin-bottom: 0.6rem;
         box-shadow: 0 5px 14px rgba(0, 0, 0, 0.05);
-        min-height: 72px;
+        min-height: 74px;
         display: flex;
         align-items: center;
     }
 
-    /* Nombre más grande */
+    /* Nombre más distinguible */
     .name-cell {
-        font-size: 1.05rem;
-        font-weight: 800;
-        color: #111827;
+        font-size: 1.08rem;
+        font-weight: 900;
+        color: #0f172a;
         line-height: 1.4;
     }
 
     /* Fecha */
     .date-cell {
-        font-size: 0.95rem;
+        font-size: 0.96rem;
         color: #475569;
+        font-weight: 600;
     }
 
     /* Precio */
     .price-cell {
-        font-size: 1.2rem;
+        font-size: 1.25rem;
         font-weight: 900;
         color: #059669;
         white-space: nowrap;
@@ -127,41 +130,43 @@ st.markdown("""
 
     /* Precio no disponible */
     .price-unavailable {
-        font-size: 0.95rem;
+        font-size: 0.96rem;
         font-weight: 700;
         color: #b45309;
         white-space: nowrap;
     }
 
-    /* URL más grande */
+    /* URL más visible */
     .url-cell {
-        font-size: 0.98rem;
-        color: #475569;
-        line-height: 1.5;
+        font-size: 1rem;
+        color: #1d4ed8;
+        font-weight: 600;
+        line-height: 1.55;
         word-break: break-word;
     }
 
-    /* Inputs visibles y redondeados */
+    /* Inputs visibles */
     div[data-baseweb="input"] > div {
         border-radius: 10px !important;
     }
 
     /* Botón Añadir */
     .stForm button[kind="primary"] {
-        background: #2563eb !important;
-        border: 1px solid #2563eb !important;
+        background: #7c3aed !important;
+        border: 1px solid #7c3aed !important;
         color: white !important;
         border-radius: 10px !important;
         font-weight: 800 !important;
-        min-height: 2.6rem !important;
+        min-height: 2.65rem !important;
     }
 
     .stForm button[kind="primary"]:hover {
-        background: #1d4ed8 !important;
-        border-color: #1d4ed8 !important;
+        background: #6d28d9 !important;
+        border-color: #6d28d9 !important;
+        color: white !important;
     }
 
-    /* Botón Eliminar */
+    /* Botón eliminar */
     .stButton button[kind="secondary"] {
         background: #fff5f5 !important;
         border: 1px solid #fecaca !important;
@@ -177,7 +182,7 @@ st.markdown("""
         color: #b91c1c !important;
     }
 
-    /* Ocultar líneas horizontales si aparecieran */
+    /* Ocultar líneas si apareciesen */
     hr {
         display: none !important;
     }
@@ -213,19 +218,19 @@ REPO = st.secrets["REPO"]
 # Archivo donde se guardan los productos
 FILE = "products.json"
 
-# Rama principal del repositorio
+# Rama principal
 BRANCH = "main"
 
 # Endpoint de la API de GitHub
 API = f"https://api.github.com/repos/{REPO}/contents/{FILE}"
 
-# Cabeceras para autenticación con GitHub
+# Cabeceras para GitHub
 headers = {
     "Authorization": f"Bearer {TOKEN}",
     "Accept": "application/vnd.github+json"
 }
 
-# Cabeceras para pedir páginas simulando navegador
+# Cabeceras para pedir páginas como navegador
 REQUEST_HEADERS = {
     "User-Agent": "Mozilla/5.0"
 }
@@ -237,7 +242,7 @@ REQUEST_HEADERS = {
 
 def valid_url(url):
     """
-    Comprueba si una URL tiene formato válido.
+    Comprueba si la URL tiene un formato válido.
     """
     try:
         result = urlparse(url)
@@ -269,18 +274,15 @@ def load_products():
     Lee products.json desde GitHub.
 
     Devuelve:
-    - la lista de productos
-    - el SHA actual del archivo
-
-    Si algún producto antiguo no tiene added_at,
-    se le añade el campo con valor None.
+    - lista de productos
+    - SHA actual del archivo
     """
     response = requests.get(API, headers=headers, timeout=30)
     response.raise_for_status()
 
     data = response.json()
 
-    # El contenido llega en base64
+    # GitHub devuelve el archivo codificado en base64
     content = base64.b64decode(data["content"]).decode("utf-8")
     products = json.loads(content)
 
@@ -336,7 +338,7 @@ def extract_price_from_jsonld(soup):
 
             offers = obj.get("offers")
 
-            # Caso: offers es un diccionario
+            # Caso 1: offers es diccionario
             if isinstance(offers, dict):
                 price = offers.get("price")
                 if price is not None:
@@ -345,7 +347,7 @@ def extract_price_from_jsonld(soup):
                     except Exception:
                         pass
 
-            # Caso: offers es una lista
+            # Caso 2: offers es lista
             elif isinstance(offers, list):
                 for offer in offers:
                     if isinstance(offer, dict) and offer.get("price") is not None:
@@ -440,14 +442,13 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Recuadro visual para el formulario
 with st.container(border=True):
     st.markdown(
         f'<div class="counter-box">{len(products)} / 10 productos</div>',
         unsafe_allow_html=True
     )
 
-    # Si se alcanza el límite, desactivamos el formulario
+    # Si se llega al límite, se desactiva el formulario
     limit_reached = len(products) >= 10
 
     with st.form("form", clear_on_submit=True):
@@ -489,7 +490,7 @@ with st.container(border=True):
             elif not valid_url(url):
                 st.error("URL inválida.")
 
-            # Duplicado
+            # Producto duplicado
             elif any(p["url"] == url for p in products):
                 st.warning("Este producto ya está añadido.")
 
@@ -502,6 +503,9 @@ with st.container(border=True):
 
                 save_products(products, sha)
                 st.rerun()
+
+    if limit_reached:
+        st.warning("Has alcanzado el máximo de 10 productos. Elimina uno para añadir otro.")
 
 
 # ===================================================
@@ -580,5 +584,10 @@ else:
 
         # Acción
         with row_cols[4]:
-            if st.button("Eliminar", key=i, type="secondary", use_container_width=True):
+            if st.button(
+                "Eliminar",
+                key=i,
+                type="secondary",
+                use_container_width=True
+            ):
                 confirm_delete(i, product["name"], products, sha)
