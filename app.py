@@ -168,7 +168,7 @@ st.markdown("""
     .stForm button[kind="primary"] {
         background: #2563eb !important;
         border: 1px solid #2563eb !important;
-        color: white !important;
+        color: blue !important;
         border-radius: 10px !important;
         font-weight: 800 !important;
         min-height: 2.65rem !important;
